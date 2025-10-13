@@ -173,16 +173,15 @@ function toggleTheme() {
 
 function checkTheme() {
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
+    if (savedTheme === 'dark') {
+        themeToggle.textContent = '🌙';
+    } else {
         document.body.classList.add('light-mode');
         themeToggle.textContent = '☀️';
-        // Hide planets light mode
         setTimeout(() => {
             const floatingElements = document.querySelectorAll('.floating-icon, .rocket, .shooting-star, .planet');
             floatingElements.forEach(el => el.style.display = 'none');
         }, 100);
-    } else {
-        themeToggle.textContent = '🌙';
     }
 }
 
