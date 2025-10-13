@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'https://blogspace-u1d3.onrender.com/api';
 let currentUser = null;
 let token = localStorage.getItem('token');
 let blogs = [];
