@@ -1,6 +1,4 @@
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5001/api' 
-    : `${window.location.origin}/api`;
+const API_URL = 'http://localhost:5001/api';
 let currentUser = null;
 let token = localStorage.getItem('token');
 let blogs = [];
