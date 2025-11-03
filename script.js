@@ -26,11 +26,13 @@ function setupEventListeners() {
     authBtn.addEventListener('click', () => authModal.style.display = 'block');
     document.querySelector('.close').addEventListener('click', () => authModal.style.display = 'none');
     
-    // Social button handlers
-    document.querySelectorAll('.social-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            alert('OAuth integration coming soon! 🚀\nFor now, please use email registration.');
-        });
+    // Social button 
+    document.querySelector('.social-btn:first-child').addEventListener('click', () => {
+        window.location.href = 'http://localhost:5000/api/auth/google';
+    });
+    
+    document.querySelector('.social-btn:last-child').addEventListener('click', () => {
+        window.location.href = 'http://localhost:5000/api/auth/github';
     });
     
 
@@ -60,27 +62,8 @@ function setupEventListeners() {
     document.getElementById('searchInput').addEventListener('input', handleSearch);
 }
 
-// Easter Eggs for Dark Mode
+// EE
 function setupEasterEggs() {
-    // Triple-click theme toggle for neon pulse
-    let themeClickCount = 0;
-    let themeClickTimer;
-    themeToggle.addEventListener('click', () => {
-        if (document.body.classList.contains('light-mode')) return;
-        
-        themeClickCount++;
-        clearTimeout(themeClickTimer);
-        
-        if (themeClickCount === 3) {
-            activateNeonPulse();
-            themeClickCount = 0;
-        }
-        
-        themeClickTimer = setTimeout(() => {
-            themeClickCount = 0;
-        }, 800);
-    });
-    
     // Double-click EE
     const brandName = document.querySelector('.nav-brand h2');
     let clickCount = 0;
@@ -110,14 +93,8 @@ function setupEasterEggs() {
     });
 }
 
-function activateNeonPulse() {
-    // Neon pulse all elements
-    document.body.classList.add('neon-pulse');
-    setTimeout(() => document.body.classList.remove('neon-pulse'), 4000);
-}
-
 function activateRainbowMode() {
-    // Rainbow on all elements
+    // Rainbow
     document.body.classList.add('rainbow-mode');
     setTimeout(() => document.body.classList.remove('rainbow-mode'), 3000);
 }
@@ -156,16 +133,19 @@ function updateActiveNav(activeLink) {
     activeLink.classList.add('active');
 }
 
+function toggleFloatingElements(show) {
+    const floatingElements = document.querySelectorAll('.floating-icon, .rocket, .shooting-star, .planet');
+    floatingElements.forEach(el => {
+        el.style.display = show ? 'block' : 'none';
+    });
+}
+
 function toggleTheme() {
     setTimeout(() => {
         const isLightMode = document.body.classList.toggle('light-mode');
         themeToggle.textContent = isLightMode ? '☀️' : '🌙';
         localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
-        
-        const floatingElements = document.querySelectorAll('.floating-icon, .rocket, .shooting-star, .planet');
-        floatingElements.forEach(el => {
-            el.style.display = isLightMode ? 'none' : 'block';
-        });
+        toggleFloatingElements(!isLightMode);
     }, 100);
 }
 
@@ -176,10 +156,7 @@ function checkTheme() {
     } else {
         document.body.classList.add('light-mode');
         themeToggle.textContent = '☀️';
-        setTimeout(() => {
-            const floatingElements = document.querySelectorAll('.floating-icon, .rocket, .shooting-star, .planet');
-            floatingElements.forEach(el => el.style.display = 'none');
-        }, 100);
+        setTimeout(() => toggleFloatingElements(false), 100);
     }
 }
 
@@ -205,14 +182,7 @@ async function handleLogin(e) {
         const data = await res.json();
         
         if (res.ok) {
-            token = data.token;
-            currentUser = data.user;
-            localStorage.setItem('token', token);
-            authModal.style.display = 'none';
-            authBtn.textContent = 'Logout';
-            authBtn.onclick = logout;
-            loadBlogs();
-            updateProfile();
+            setAuthState(data.token, data.user);
         } else {
             alert(data.error || 'Login failed');
         }
@@ -243,16 +213,9 @@ async function handleRegister(e) {
         const data = await res.json();
         
         if (res.ok) {
-            token = data.token;
-            currentUser = data.user;
-            localStorage.setItem('token', token);
-            authModal.style.display = 'none';
-            authBtn.textContent = 'Logout';
-            authBtn.onclick = logout;
+            setAuthState(data.token, data.user);
             e.target.reset();
-            loadBlogs();
-            updateProfile();
-            alert('Account created successfully! Welcome to Blogspace! 🚀');
+            alert('Account created successfully! Welcome to Blogspace! ');
         } else {
             alert(data.error || 'Registration failed');
         }
@@ -260,6 +223,17 @@ async function handleRegister(e) {
         console.error('Registration error:', err);
         alert('Server error. Make sure the server is running on port 5000.');
     }
+}
+
+function setAuthState(newToken, user) {
+    token = newToken;
+    currentUser = user;
+    localStorage.setItem('token', token);
+    authModal.style.display = 'none';
+    authBtn.textContent = 'Logout';
+    authBtn.onclick = logout;
+    loadBlogs();
+    updateProfile();
 }
 
 function logout() {
@@ -285,24 +259,64 @@ async function updateProfile() {
             const data = await res.json();
             
             if (res.ok) {
+                const joinDate = new Date(data.user.createdAt).toLocaleDateString('en-US', { 
+                    year: 'numeric', month: 'long' 
+                });
+                const totalWords = data.blogs.reduce((sum, blog) => sum + blog.content.split(' ').length, 0);
+                const uniqueTags = [...new Set(data.blogs.flatMap(blog => blog.tags))].length;
+                
                 profileName.textContent = data.user.name;
-                profileBio.textContent = `${data.user.email} • ${data.user.university}`;
+                profileBio.innerHTML = `
+                    <div class="profile-details">
+                        <span class="profile-email"> ${data.user.email}</span>
+                        <span class="profile-university"> ${data.user.university}</span>
+                        <span class="profile-joined"> Joined ${joinDate}</span>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <span class="stat-number">${data.blogs.length}</span>
+                            <span class="stat-label">Posts</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">${totalWords}</span>
+                            <span class="stat-label">Words</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number">${uniqueTags}</span>
+                            <span class="stat-label">Tags</span>
+                        </div>
+                    </div>
+                `;
                 
                 if (data.blogs.length > 0) {
-                    userPosts.innerHTML = data.blogs.map(blog => `
-                        <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
-                            <h4>${blog.title}</h4>
-                            <p>${blog.content.substring(0, 150)}...</p>
-                            <div class="blog-meta">
-                                <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <div class="blog-tags">
-                                ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                            </div>
+                    userPosts.innerHTML = `
+                        <div class="posts-header">
+                            <h4>Recent Posts (${data.blogs.length})</h4>
+                            <button class="btn-primary" onclick="showPage('create')"> Write New Post</button>
                         </div>
-                    `).join('');
+                        ${data.blogs.map(blog => `
+                            <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
+                                <h4>${blog.title}</h4>
+                                <p>${blog.content.substring(0, 150)}...</p>
+                                <div class="blog-meta">
+                                    <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
+                                    <span> ${blog.content.split(' ').length} words</span>
+                                </div>
+                                <div class="blog-tags">
+                                    ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
                 } else {
-                    userPosts.innerHTML = '<div class="empty-state"><p>No posts yet. Start writing!</p></div>';
+                    userPosts.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">✍️</div>
+                            <h4>Start Your Blogging Journey!</h4>
+                            <p>Share your thoughts, experiences, and knowledge with the campus community.</p>
+                            <button class="btn-primary" onclick="showPage('create')">Write Your First Post</button>
+                        </div>
+                    `;
                 }
             }
         } catch (err) {
@@ -310,8 +324,19 @@ async function updateProfile() {
         }
     } else {
         profileName.textContent = 'Your Profile';
-        profileBio.textContent = 'Student at University';
-        userPosts.innerHTML = '<div class="empty-state"><p>Please login to view your profile</p></div>';
+        profileBio.innerHTML = `
+            <div class="profile-details">
+                <span class="profile-placeholder"> Student at University</span>
+            </div>
+        `;
+        userPosts.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🔐</div>
+                <h4>Login to View Your Profile</h4>
+                <p>Sign in to see your posts, stats, and manage your content.</p>
+                <button class="btn-primary" onclick="document.getElementById('authBtn').click()">Login Now</button>
+            </div>
+        `;
     }
 }
 
@@ -349,6 +374,22 @@ async function handleBlogSubmit(e) {
     }
 }
 
+function renderBlogCard(blog) {
+    return `
+        <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
+            <h4>${blog.title}</h4>
+            <p>${blog.content.substring(0, 150)}...</p>
+            <div class="blog-meta">
+                <span class="blog-author">By ${blog.author.name}</span>
+                <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
+            </div>
+            <div class="blog-tags">
+                ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+            </div>
+        </div>
+    `;
+}
+
 async function loadBlogs() {
     try {
         const res = await fetch(`${API_URL}/blogs`);
@@ -356,20 +397,7 @@ async function loadBlogs() {
         
         if (res.ok) {
             blogs = data;
-            const blogContainer = document.getElementById('blogPosts');
-            blogContainer.innerHTML = blogs.map(blog => `
-                <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
-                    <h4>${blog.title}</h4>
-                    <p>${blog.content.substring(0, 150)}...</p>
-                    <div class="blog-meta">
-                        <span class="blog-author">By ${blog.author.name}</span>
-                        <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <div class="blog-tags">
-                        ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
-                </div>
-            `).join('');
+            document.getElementById('blogPosts').innerHTML = blogs.map(renderBlogCard).join('');
         }
     } catch (err) {
         console.error('Failed to load blogs:', err);
@@ -422,23 +450,10 @@ function handleSearch(e) {
         blog.tags.some(tag => tag.toLowerCase().includes(query))
     );
     
-    const blogContainer = document.getElementById('blogPosts');
-    blogContainer.innerHTML = filteredBlogs.map(blog => `
-        <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
-            <h4>${blog.title}</h4>
-            <p>${blog.content.substring(0, 150)}...</p>
-            <div class="blog-meta">
-                <span class="blog-author">By ${blog.author.name}</span>
-                <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
-            </div>
-            <div class="blog-tags">
-                ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-            </div>
-        </div>
-    `).join('');
+    document.getElementById('blogPosts').innerHTML = filteredBlogs.map(renderBlogCard).join('');
 }
 
-// Create floating elements
+// floating elements
 function createSpaceElements() {
     // Planets
     const planets = ['🪐', '🌍', '🌙', '⭐','🌕','☄️','🌌'];
@@ -449,7 +464,6 @@ function createSpaceElements() {
         element.style.top = Math.random() * 70 + 10 + '%';
         element.style.left = Math.random() * 80 + 10 + '%';
         element.style.animationDelay = index * 1.5 + 's';
-        element.addEventListener('click', () => animateSpaceElement(element));
         document.body.appendChild(element);
     });
 
@@ -462,7 +476,6 @@ function createSpaceElements() {
         element.style.top = Math.random() * 70 + 15 + '%';
         element.style.left = Math.random() * 70 + 15 + '%';
         element.style.animationDelay = index * 3 + 's';
-        element.addEventListener('click', () => animateSpaceElement(element));
         document.body.appendChild(element);
     });
 
@@ -484,17 +497,12 @@ function createSpaceElements() {
     }, 2000);
 }
 
-// Animate space elements on click
-function animateSpaceElement(element) {
-    element.style.transform = 'scale(1.5)';
-    element.style.transition = 'transform 0.3s ease';
-    setTimeout(() => {
-        element.style.transform = 'scale(1)';
-    }, 300);
-}
-
-// Check if user is logged in on page load
-if (token) {
+//oauth callback adn existing login 
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('token')) {
+    setAuthState(urlParams.get('token'), JSON.parse(decodeURIComponent(urlParams.get('user'))));
+    window.history.replaceState({}, document.title, window.location.pathname);
+} else if (token && !currentUser) {
     fetch(`${API_URL}/users/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -505,16 +513,11 @@ if (token) {
             authBtn.textContent = 'Logout';
             authBtn.onclick = logout;
         } else {
-            localStorage.removeItem('token');
-            token = null;
+            logout();
         }
     })
-    .catch(() => {
-        localStorage.removeItem('token');
-        token = null;
-    });
+    .catch(() => logout());
 }
 
 window.showPage = showPage;
 window.showBlogDetail = showBlogDetail;
-window.setupEasterEggs = setupEasterEggs;

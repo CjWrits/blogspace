@@ -14,7 +14,7 @@ body {
     overflow-x: hidden;
 }
 
-/* Animated starfield background */
+/* starfield */
 body::before {
     content: '';
     position: fixed;
@@ -34,7 +34,7 @@ body::before {
     z-index: -2;
 }
 
-/* Nebula effect */
+/* Nebula */
 body::after {
     content: '';
     position: fixed;
@@ -54,7 +54,7 @@ body::after {
     to { transform: translateX(-200px); }
 }
 
-/* Floating icons */
+/* Icons */
 .floating-icon {
     position: fixed;
     font-size: 36px;
@@ -704,12 +704,17 @@ body::after {
 
 .empty-state {
     text-align: center;
-    padding: 20px 0;
+    padding: 60px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 234, 255, 0.1);
 }
 
 .empty-state p {
-    color: rgba(176, 176, 176, 0.6);
-    font-size: 13px;
+    color: #b0b0b0;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 25px;
 }
 
 /* Modal */
@@ -1067,25 +1072,59 @@ body.light-mode .create-blog h2 {
     backdrop-filter: blur(20px);
 }
 
-.profile-info h2 {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 18px;
-    font-weight: 400;
-    margin-bottom: 12px;
-    color: #a855f7;
-    text-shadow: 0 0 15px rgba(168, 85, 247, 0.8);
-}
+
 
 .profile-info p {
     color: #b0b0b0;
     font-size: 15px;
 }
 
-.profile-stats {
-    font-size: 14px;
-    margin-top: 8px;
-    opacity: 0.8;
+
+
+.profile-email {
+    color: #00eaff !important;
 }
+
+.profile-university {
+    color: #a855f7 !important;
+}
+
+.profile-joined {
+    color: #ff2e97 !important;
+}
+
+
+
+.posts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 234, 255, 0.2);
+}
+
+.posts-header h4 {
+    color: #00eaff;
+    font-size: 16px;
+    margin: 0;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    color: #00eaff;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+
+
+
 
 .profile-content {
     background: rgba(10, 15, 31, 0.8);
@@ -1325,7 +1364,7 @@ body.light-mode .create-blog h2 {
     50% { transform: translateY(-30px) rotate(15deg); }
 }
 
-/* Easter Egg Effects */
+/*EE*/
 .neon-pulse {
     animation: screen-flicker 0.1s infinite;
 }
@@ -1648,7 +1687,7 @@ body.light-mode .planet {
     display: none;
 }
 
-/* Typography & Effects Override */
+/*Effects overriden */
 body.light-mode * {
     font-family: 'Inter', sans-serif !important;
     text-shadow: none !important;
