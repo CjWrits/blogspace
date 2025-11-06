@@ -295,18 +295,16 @@ async function updateProfile() {
                             <button class="btn-primary" onclick="showPage('create')"> Write New Post</button>
                         </div>
                         ${data.blogs.map(blog => `
-                            <div class="blog-post">
-                                <div onclick="showBlogDetail('${blog._id}')">
-                                    <h4>${blog.title}</h4>
-                                    <p>${formatContent(blog.content.substring(0, 150))}...</p>
-                                    <div class="blog-meta">
-                                        <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
-                                        <span> ${blog.content.split(' ').length} words</span>
-                                    </div>
-                                    <div class="blog-tags">
-                                        ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                                    </div>
-                               
+                            <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
+                                <h4>${blog.title}</h4>
+                                <p>${formatContent(blog.content.substring(0, 150))}...</p>
+                                <div class="blog-meta">
+                                    <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
+                                    <span> ${blog.content.split(' ').length} words</span>
+                                </div>
+                                <div class="blog-tags">
+                                    ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                </div>
                             </div>
                         `).join('')}
                     `;
@@ -417,13 +415,11 @@ async function showBlogDetail(blogId) {
         const blog = await res.json();
         
         if (res.ok) {
-            const isOwner = currentUser && blog.author._id === currentUser._id;
             document.getElementById('blogDetailContent').innerHTML = `
                 <h1>${blog.title}</h1>
                 <div class="blog-meta">
                     <span class="blog-author">By ${blog.author.name}</span>
                     <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
-                    ${isOwner ? `<button class="btn-danger" onclick="deleteBlog('${blog._id}')">Delete</button>` : ''}
                 </div>
                 <div class="blog-content">${formatContent(blog.content)}</div>
                 <div class="blog-tags">
