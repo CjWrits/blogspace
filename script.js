@@ -411,6 +411,7 @@ async function loadBlogs() {
     }
 }
 
+
 async function showBlogDetail(blogId) {
     try {
         const res = await fetch(`${API_URL}/blogs/${blogId}`);
