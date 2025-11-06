@@ -632,6 +632,37 @@ body::after {
     box-shadow: 0 0 15px rgba(0, 234, 255, 0.5);
 }
 
+/* Delete button styling */
+.delete-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 46, 151, 0.2);
+    border: 1px solid rgba(255, 46, 151, 0.4);
+    color: #ff2e97;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    z-index: 10;
+    opacity: 0;
+}
+
+.blog-post:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 46, 151, 0.4);
+    box-shadow: 0 0 15px rgba(255, 46, 151, 0.6);
+    transform: scale(1.1);
+}
+
 /* Sidebar */
 .sidebar {
     display: flex;
@@ -1124,10 +1155,6 @@ body.light-mode .create-blog h2 {
     margin-bottom: 12px;
 }
 
-
-
-
-
 .profile-content {
     background: rgba(10, 15, 31, 0.8);
     padding: 40px;
@@ -1526,7 +1553,16 @@ body.light-mode .blog-meta {
     color: #9ca3af;
 }
 
+body.light-mode .delete-btn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
 
+body.light-mode .delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
 
 body.light-mode .blog-form {
     background: #ffffff;
@@ -1833,4 +1869,3 @@ body.light-mode .social-btn:hover {
     color: #6366f1;
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
-

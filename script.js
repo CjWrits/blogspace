@@ -295,16 +295,19 @@ async function updateProfile() {
                             <button class="btn-primary" onclick="showPage('create')"> Write New Post</button>
                         </div>
                         ${data.blogs.map(blog => `
-                            <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
-                                <h4>${blog.title}</h4>
-                                <p>${formatContent(blog.content.substring(0, 150))}...</p>
-                                <div class="blog-meta">
-                                    <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
-                                    <span> ${blog.content.split(' ').length} words</span>
+                            <div class="blog-post">
+                                <div onclick="showBlogDetail('${blog._id}')" style="cursor: pointer;">
+                                    <h4>${blog.title}</h4>
+                                    <p>${formatContent(blog.content.substring(0, 150))}...</p>
+                                    <div class="blog-meta">
+                                        <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
+                                        <span> ${blog.content.split(' ').length} words</span>
+                                    </div>
+                                    <div class="blog-tags">
+                                        ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                    </div>
                                 </div>
-                                <div class="blog-tags">
-                                    ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                                </div>
+                                <button class="delete-btn" onclick="deleteBlog('${blog._id}', event)" title="Delete Post">🗑️</button>
                             </div>
                         `).join('')}
                     `;
@@ -523,5 +526,35 @@ if (urlParams.get('token')) {
     .catch(() => logout());
 }
 
+async function deleteBlog(blogId, event) {
+    event.stopPropagation();
+    
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${API_URL}/blogs/${blogId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (res.ok) {
+            alert('Post deleted successfully!');
+            updateProfile();
+            loadBlogs();
+        } else {
+            const data = await res.json();
+            alert(data.error || 'Failed to delete post');
+        }
+    } catch (err) {
+        console.error('Delete error:', err);
+        alert('Server error. Please try again.');
+    }
+}
+
 window.showPage = showPage;
 window.showBlogDetail = showBlogDetail;
+window.deleteBlog = deleteBlog;

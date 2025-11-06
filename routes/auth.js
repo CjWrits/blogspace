@@ -12,12 +12,31 @@ router.post('/register', async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ error: 'Email already exists' });
     
+    // Check if this is the first user (make them admin)
+    const userCount = await User.countDocuments();
+    const isFirstUser = userCount === 0;
+    
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, university });
+    const user = new User({ 
+      name, 
+      email, 
+      password: hashedPassword, 
+      university,
+      isAdmin: isFirstUser
+    });
     await user.save();
     
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.json({ token, user: { id: user._id, name, email, university } });
+    res.json({ 
+      token, 
+      user: { 
+        id: user._id, 
+        name, 
+        email, 
+        university, 
+        isAdmin: user.isAdmin 
+      } 
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -35,7 +54,16 @@ router.post('/login', async (req, res) => {
     if (!validPassword) return res.status(400).json({ error: 'Invalid credentials' });
     
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, university: user.university } });
+    res.json({ 
+      token, 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        university: user.university,
+        isAdmin: user.isAdmin 
+      } 
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
