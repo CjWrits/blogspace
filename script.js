@@ -295,16 +295,19 @@ async function updateProfile() {
                             <button class="btn-primary" onclick="showPage('create')"> Write New Post</button>
                         </div>
                         ${data.blogs.map(blog => `
-                            <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
-                                <h4>${blog.title}</h4>
-                                <p>${formatContent(blog.content.substring(0, 150))}...</p>
-                                <div class="blog-meta">
-                                    <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
-                                    <span> ${blog.content.split(' ').length} words</span>
+                            <div class="blog-post">
+                                <div onclick="showBlogDetail('${blog._id}')">
+                                    <h4>${blog.title}</h4>
+                                    <p>${formatContent(blog.content.substring(0, 150))}...</p>
+                                    <div class="blog-meta">
+                                        <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
+                                        <span> ${blog.content.split(' ').length} words</span>
+                                    </div>
+                                    <div class="blog-tags">
+                                        ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                    </div>
                                 </div>
-                                <div class="blog-tags">
-                                    ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                                </div>
+                                <button class="btn-danger" onclick="event.stopPropagation(); deleteBlog('${blog._id}')">Delete</button>
                             </div>
                         `).join('')}
                     `;
@@ -408,17 +411,41 @@ async function loadBlogs() {
     }
 }
 
+async function deleteBlog(blogId) {
+    if (!confirm('Are you sure you want to delete this blog?')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/blogs/${blogId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            loadBlogs();
+            updateProfile();
+            showPage('home');
+            alert('Blog deleted successfully');
+        } else {
+            alert('Failed to delete blog');
+        }
+    } catch (err) {
+        alert('Server error. Please try again.');
+    }
+}
+
 async function showBlogDetail(blogId) {
     try {
         const res = await fetch(`${API_URL}/blogs/${blogId}`);
         const blog = await res.json();
         
         if (res.ok) {
+            const isOwner = currentUser && blog.author._id === currentUser._id;
             document.getElementById('blogDetailContent').innerHTML = `
                 <h1>${blog.title}</h1>
                 <div class="blog-meta">
                     <span class="blog-author">By ${blog.author.name}</span>
                     <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
+                    ${isOwner ? `<button class="btn-danger" onclick="deleteBlog('${blog._id}')">Delete</button>` : ''}
                 </div>
                 <div class="blog-content">${formatContent(blog.content)}</div>
                 <div class="blog-tags">
