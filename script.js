@@ -297,7 +297,7 @@ async function updateProfile() {
                         ${data.blogs.map(blog => `
                             <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
                                 <h4>${blog.title}</h4>
-                                <p>${blog.content.substring(0, 150)}...</p>
+                                <p>${formatContent(blog.content.substring(0, 150))}...</p>
                                 <div class="blog-meta">
                                     <span> ${new Date(blog.createdAt).toLocaleDateString()}</span>
                                     <span> ${blog.content.split(' ').length} words</span>
@@ -374,6 +374,10 @@ async function handleBlogSubmit(e) {
     }
 }
 
+function formatContent(content) {
+    return content.replace(/\n/g, '<br>');
+}
+
 function renderBlogCard(blog) {
     return `
         <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
@@ -416,7 +420,7 @@ async function showBlogDetail(blogId) {
                     <span class="blog-author">By ${blog.author.name}</span>
                     <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
                 </div>
-                <div class="blog-content">${blog.content}</div>
+                <div class="blog-content">${formatContent(blog.content)}</div>
                 <div class="blog-tags">
                     ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                 </div>
