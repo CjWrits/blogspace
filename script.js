@@ -173,8 +173,11 @@ async function handleLogin(e) {
     const email = e.target.querySelector('input[type="email"]').value;
     const password = e.target.querySelector('input[type="password"]').value;
     
+    const isAdminLogin = email === 'admin@blogspace.com';
+    const endpoint = isAdminLogin ? '/auth/admin-login' : '/auth/login';
+    
     try {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetch(`${API_URL}${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -183,6 +186,9 @@ async function handleLogin(e) {
         
         if (res.ok) {
             setAuthState(data.token, data.user);
+            if (isAdminLogin) {
+                alert('Welcome Administrator! You have full access.');
+            }
         } else {
             alert(data.error || 'Login failed');
         }
@@ -230,8 +236,14 @@ function setAuthState(newToken, user) {
     currentUser = user;
     localStorage.setItem('token', token);
     authModal.style.display = 'none';
-    authBtn.textContent = 'Logout';
+    authBtn.textContent = currentUser.isAdmin ? 'Admin Logout' : 'Logout';
     authBtn.onclick = logout;
+    
+    // Show admin panel if admin
+    if (currentUser.isAdmin) {
+        showAdminFeatures();
+    }
+    
     loadBlogs();
     updateProfile();
 }
@@ -382,17 +394,24 @@ function formatContent(content) {
 }
 
 function renderBlogCard(blog) {
+    const isAdmin = currentUser && currentUser.isAdmin;
+    const canDelete = isAdmin || (currentUser && currentUser.id === blog.author._id);
+    
     return `
-        <div class="blog-post" onclick="showBlogDetail('${blog._id}')">
-            <h4>${blog.title}</h4>
-            <p>${blog.content.substring(0, 150)}...</p>
-            <div class="blog-meta">
-                <span class="blog-author">By ${blog.author.name}</span>
-                <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
+        <div class="blog-post">
+            <div onclick="showBlogDetail('${blog._id}')" style="cursor: pointer; flex: 1;">
+                <h4>${blog.title}</h4>
+                <p>${blog.content.substring(0, 150)}...</p>
+                <div class="blog-meta">
+                    <span class="blog-author">By ${blog.author.name}</span>
+                    <span>${new Date(blog.createdAt).toLocaleDateString()}</span>
+                    ${isAdmin ? '<span class="admin-badge">👑 ADMIN VIEW</span>' : ''}
+                </div>
+                <div class="blog-tags">
+                    ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                </div>
             </div>
-            <div class="blog-tags">
-                ${blog.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-            </div>
+            ${canDelete ? `<button class="delete-btn" onclick="deleteBlog('${blog._id}', event)" title="${isAdmin ? 'Admin Delete' : 'Delete Post'}">🗑️</button>` : ''}
         </div>
     `;
 }
@@ -518,8 +537,13 @@ if (urlParams.get('token')) {
     .then(data => {
         if (data.user) {
             currentUser = data.user;
-            authBtn.textContent = 'Logout';
+            authBtn.textContent = currentUser.isAdmin ? 'Admin Logout' : 'Logout';
             authBtn.onclick = logout;
+            
+            // Show admin features if user is admin
+            if (currentUser.isAdmin) {
+                showAdminFeatures();
+            }
         } else {
             logout();
         }
@@ -553,6 +577,111 @@ async function deleteBlog(blogId, event) {
     } catch (err) {
         console.error('Delete error:', err);
         alert('Server error. Please try again.');
+    }
+}
+
+async function showAdminFeatures() {
+    // Create admin panel if it doesn't exist
+    if (!document.getElementById('adminPanel')) {
+        const adminPanel = document.createElement('div');
+        adminPanel.id = 'adminPanel';
+        adminPanel.className = 'page hidden';
+        adminPanel.innerHTML = `
+            <div class="container">
+                <h2>Admin Panel 👑</h2>
+                <div class="admin-stats">
+                    <h3>Platform Statistics</h3>
+                    <div id="adminStats">Loading...</div>
+                </div>
+                <div class="user-management">
+                    <h3>User Management</h3>
+                    <div id="userList">Loading user list...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(adminPanel);
+        
+        // Add admin panel link to navigation
+        const navMenu = document.querySelector('.nav-menu');
+        const adminLink = document.createElement('a');
+        adminLink.href = '#adminPanel';
+        adminLink.className = 'nav-link';
+        adminLink.textContent = 'Admin Panel 👑';
+        
+        // Insert before the login button
+        const authBtn = document.getElementById('authBtn');
+        navMenu.insertBefore(adminLink, authBtn);
+        
+        // Add event listener for the new nav link
+        adminLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage('adminPanel');
+            updateActiveNav(e.target);
+            loadAdminData();
+        });
+    }
+}
+
+async function loadAdminData() {
+    if (!currentUser || !currentUser.isAdmin) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/users`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+            const stats = {
+                totalUsers: data.length,
+                totalBlogs: blogs.length,
+                totalTags: [...new Set(blogs.flatMap(blog => blog.tags))].length
+            };
+            
+            document.getElementById('adminStats').innerHTML = `
+                <div class="admin-stat-grid">
+                    <div class="stat-card">
+                        <h4>Total Users</h4>
+                        <p>${stats.totalUsers}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Total Blogs</h4>
+                        <p>${stats.totalBlogs}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Total Tags</h4>
+                        <p>${stats.totalTags}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('userList').innerHTML = `
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>University</th>
+                            <th>Join Date</th>
+                            <th>Posts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(user => `
+                            <tr>
+                                <td>${user.name}</td>
+                                <td>${user.email}</td>
+                                <td>${user.university}</td>
+                                <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                                <td>${blogs.filter(blog => blog.author._id === user._id).length}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    } catch (err) {
+        console.error('Failed to load admin data:', err);
     }
 }
 

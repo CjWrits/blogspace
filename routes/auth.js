@@ -42,6 +42,37 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Admin Login
+router.post('/admin-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    console.log('Admin login attempt:', { email, providedPassword: password ? '***' : 'none' });
+    console.log('Expected admin email:', process.env.ADMIN_EMAIL);
+    console.log('Expected admin password:', process.env.ADMIN_PASSWORD ? '***' : 'not set');
+    
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+      const token = jwt.sign({ id: 'admin', isAdmin: true }, process.env.JWT_SECRET);
+      res.json({ 
+        token, 
+        user: { 
+          id: 'admin',
+          name: 'Administrator', 
+          email: process.env.ADMIN_EMAIL, 
+          university: 'Blogspace Admin',
+          isAdmin: true 
+        } 
+      });
+    } else {
+      console.log('Admin login failed - credentials mismatch');
+      res.status(400).json({ error: 'Invalid admin credentials' });
+    }
+  } catch (err) {
+    console.error('Admin login error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Login
 router.post('/login', async (req, res) => {
   try {

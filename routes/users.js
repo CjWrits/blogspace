@@ -14,4 +14,19 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
+// Get all users (admin only)
+router.get('/', auth, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.id === 'admin' || req.user.isAdmin) {
+      const users = await User.find().select('-password').sort({ createdAt: -1 });
+      res.json(users);
+    } else {
+      res.status(403).json({ error: 'Admin access required' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

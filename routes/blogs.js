@@ -41,7 +41,14 @@ router.put('/:id', auth, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ error: 'Blog not found' });
-    if (blog.author.toString() !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
+    
+    // Allow admin or blog author to update
+    const isAdmin = req.user._id === 'admin' || req.user.isAdmin;
+    const isAuthor = blog.author.toString() === req.user._id || blog.author.toString() === req.user.id;
+    
+    if (!isAdmin && !isAuthor) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
     
     Object.assign(blog, req.body);
     await blog.save();
@@ -56,7 +63,14 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ error: 'Blog not found' });
-    if (blog.author.toString() !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
+    
+    // Allow admin or blog author to delete
+    const isAdmin = req.user._id === 'admin' || req.user.isAdmin;
+    const isAuthor = blog.author.toString() === req.user._id || blog.author.toString() === req.user.id;
+    
+    if (!isAdmin && !isAuthor) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
     
     await blog.deleteOne();
     res.json({ message: 'Blog deleted' });
